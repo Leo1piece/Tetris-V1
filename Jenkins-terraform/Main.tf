@@ -1,4 +1,5 @@
 resource "aws_iam_role" "example_role" {
+
   name = "Jenkins-terraform"
   assume_role_policy = <<EOF
 {
@@ -16,6 +17,7 @@ resource "aws_iam_role" "example_role" {
 EOF
 }
 
+# Attaching the policy to the role policy 是 adminsitrator accss policy， 這樣 Jenkins 就有了 admin 的權限
 resource "aws_iam_role_policy_attachment" "example_attachment" {
   role       = aws_iam_role.example_role.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
@@ -27,6 +29,7 @@ resource "aws_iam_instance_profile" "example_profile" {
 }
 
 
+# Create a security group that allows HTTP and SSH traffic 9000是sonarqube  3000是 tfrics? 还是grafana
 resource "aws_security_group" "Jenkins-sg" {
   name        = "Jenkins-Security Group"
   description = "Open 22,443,80,8080,9000"
@@ -58,9 +61,12 @@ resource "aws_security_group" "Jenkins-sg" {
   }
 }
 
+
+# Create a new EC2 instance 這裡的user_data 是用來安裝jenkins的 這裡的keypair 也需要修改
 resource "aws_instance" "web" {
   ami                    = "ami-0df4b2961410d4cff"
   instance_type          = "t2.medium"
+  # 需要修改keypair 为自己的key 
   key_name               = "purplehaze"
   vpc_security_group_ids = [aws_security_group.Jenkins-sg.id]
   user_data              = templatefile("./install_jenkins.sh", {})
